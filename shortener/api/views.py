@@ -8,7 +8,7 @@ class ShortenerCreateView(generics.CreateAPIView):
     serializer_class = ShortenerSerializer
 
 
-class ShortenerRetrieveView(generics.RetrieveAPIView):
+class ShortenerDetailView(generics.RetrieveUpdateAPIView):
     queryset = Shortener.objects.all()
     serializer_class = ShortenerSerializer
     lookup_field = "short_code"
