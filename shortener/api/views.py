@@ -24,3 +24,9 @@ class ShortenerDetailView(generics.RetrieveUpdateDestroyAPIView):
         serializer = self.get_serializer(obj)
 
         return Response(serializer.data)
+
+
+class ShortenerStatsView(generics.RetrieveAPIView):
+    queryset = Shortener.objects.all()
+    serializer_class = ShortenerSerializer
+    lookup_field = "short_code"
