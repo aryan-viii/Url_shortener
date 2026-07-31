@@ -3,10 +3,15 @@ import qrcode
 from io import BytesIO
 from django.shortcuts import get_object_or_404, redirect
 from django.views import View
+from django.views.generic import TemplateView
 from django.http import HttpResponse
 from django.utils import timezone
 
 from .models import Shortener
+
+
+class HomeView(TemplateView):
+    template_name = "shortener/home.html"
 
 
 class RedirectView(View):
