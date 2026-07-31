@@ -9,6 +9,7 @@ class Shortener(models.Model):
     access_count = models.PositiveIntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    expires_at = models.DateTimeField(null=True, blank=True)
 
     def generate_short_code(self):
         characters = string.ascii_letters + string.digits
