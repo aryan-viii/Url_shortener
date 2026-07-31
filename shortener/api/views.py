@@ -6,7 +6,7 @@ from .serializers import ShortenerSerializer
 
 
 class ShortenerListCreateView(generics.ListCreateAPIView):
-    queryset = Shortener.objects.all()
+    queryset = Shortener.objects.all().order_by("-created_at")
     serializer_class = ShortenerSerializer
 
 
