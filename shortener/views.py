@@ -1,19 +1,23 @@
 import qrcode
 
 from io import BytesIO
+from django.core.cache import cache
 from django.shortcuts import get_object_or_404, redirect
+from django.utils.decorators import method_decorator
 from django.views import View
 from django.views.generic import TemplateView
 from django.http import HttpResponse
 from django.utils import timezone
 
 from .models import Shortener
+from .throttling import throttle
 
 
 class HomeView(TemplateView):
     template_name = "shortener/home.html"
 
 
+@method_decorator(throttle(limit=60, window_seconds=60), name="get")
 class RedirectView(View):
     def get(self, request, short_code):
         obj = get_object_or_404(
@@ -33,6 +37,7 @@ class RedirectView(View):
         return redirect(obj.url)
 
 
+@method_decorator(throttle(limit=30, window_seconds=60), name="get")
 class QRCodeView(View):
     def get(self, request, short_code):
         obj = get_object_or_404(
@@ -40,16 +45,27 @@ class QRCodeView(View):
             short_code=short_code
         )
 
-        short_url = request.build_absolute_uri(
-            f"/{obj.short_code}/"
-        )
+        # QR codes only need to change if the short link itself changes,
+        # so cache the generated PNG instead of re-rendering it on every
+        # request (QR generation is comparatively expensive for a link
+        # that might get shared and hit thousands of times).
+        cache_key = f"qr-code:{obj.short_code}"
+        png_bytes = cache.get(cache_key)
 
-        qr = qrcode.make(short_url)
+        if png_bytes is None:
+            short_url = request.build_absolute_uri(
+                f"/{obj.short_code}/"
+            )
 
-        buffer = BytesIO()
-        qr.save(buffer, format="PNG")
+            qr = qrcode.make(short_url)
+
+            buffer = BytesIO()
+            qr.save(buffer, format="PNG")
+            png_bytes = buffer.getvalue()
+
+            cache.set(cache_key, png_bytes, timeout=60 * 60 * 24)
 
         return HttpResponse(
-            buffer.getvalue(),
+            png_bytes,
             content_type="image/png"
         )
