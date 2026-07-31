@@ -5,7 +5,7 @@ from shortener.models import Shortener
 from .serializers import ShortenerSerializer
 
 
-class ShortenerCreateView(generics.CreateAPIView):
+class ShortenerListCreateView(generics.ListCreateAPIView):
     queryset = Shortener.objects.all()
     serializer_class = ShortenerSerializer
 
