@@ -29,11 +29,14 @@ Shortly allows users to create short links, use custom short codes, set expirati
 - Python
 - Django 6.0
 - Django REST Framework
-- SQLite
+- PostgreSQL
+- Docker & Docker Compose
 - HTML, CSS & JavaScript
 - qrcode & Pillow
 
 ## Getting Started
+
+The project is fully dockerized — you only need Docker installed, no local Python/Postgres setup required.
 
 Clone the repository:
 
@@ -42,46 +45,51 @@ git clone https://github.com/aryan-viii/Url_shortener.git
 cd Url_shortener
 ```
 
-Create and activate a virtual environment:
+Create a `.env` file in the project root (same folder as `docker-compose.yml`) with the following variables:
 
-```bash
-python -m venv venv
+```env
+POSTGRES_DB=url_shortener_db
+POSTGRES_USER=your_db_user
+POSTGRES_PASSWORD=your_db_password
+POSTGRES_HOST=db
+POSTGRES_PORT=5432
+DJANGO_SECRET_KEY=your_django_secret_key
 ```
 
-**Windows**
+Build and start the containers (Django app + PostgreSQL):
 
 ```bash
-venv\Scripts\activate
-```
-
-**macOS / Linux**
-
-```bash
-source venv/bin/activate
-```
-
-Install dependencies:
-
-```bash
-pip install -r requirements.txt
+docker compose up --build -d
 ```
 
 Apply migrations:
 
 ```bash
-python manage.py migrate
+docker compose exec web python manage.py migrate
 ```
 
-Start the development server:
+(Optional) Create an admin user:
 
 ```bash
-python manage.py runserver
+docker compose exec web python manage.py createsuperuser
 ```
 
 Open:
 
 ```text
-http://127.0.0.1:8000/
+http://localhost:8000/
+```
+
+To stop the containers:
+
+```bash
+docker compose down
+```
+
+To stop the containers **and** delete the database volume (fresh reset):
+
+```bash
+docker compose down -v
 ```
 
 ## API Endpoints
@@ -128,7 +136,7 @@ You can optionally provide a custom short code and expiration date:
 ## Running Tests
 
 ```bash
-python manage.py test
+docker compose exec web python manage.py test
 ```
 
 ## Cleaning Up Expired Links
@@ -136,17 +144,17 @@ python manage.py test
 Delete expired links:
 
 ```bash
-python manage.py purge_expired_links
+docker compose exec web python manage.py purge_expired_links
 ```
 
 Preview what would be deleted:
 
 ```bash
-python manage.py purge_expired_links --dry-run
+docker compose exec web python manage.py purge_expired_links --dry-run
 ```
 
 ## Development Notes
 
-This project is configured for local development.
+This project is configured for local development with Docker Compose, using `DEBUG = True` and Django's built-in dev server.
 
-Before deploying publicly, configure environment variables for sensitive settings, disable debug mode, set allowed hosts, and use an appropriate production cache/database configuration.
+Before deploying publicly: disable debug mode, set proper `ALLOWED_HOSTS`, swap the dev server for a production WSGI server (e.g. Gunicorn), and use a dedicated production database/cache configuration. Never commit the `.env` file — it's excluded via `.gitignore` and should be created fresh (with strong, unique credentials) in each environment.
